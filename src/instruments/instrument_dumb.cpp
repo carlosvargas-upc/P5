@@ -2,7 +2,6 @@
 #include <math.h>
 #include "instrument_dumb.h"
 #include "keyvalue.h"
-
 #include <stdlib.h>
 
 using namespace upc;
@@ -26,6 +25,8 @@ InstrumentDumb::InstrumentDumb(const std::string &param)
   //Create a tbl with one period of a sinusoidal wave
   tbl.resize(N);
   float phase = 0, step = 2 * M_PI /(float) N;
+  this -> phase = 0;
+ 
   index = 0;
   for (int i=0; i < N ; ++i) {
     tbl[i] = sin(phase);
@@ -34,12 +35,15 @@ InstrumentDumb::InstrumentDumb(const std::string &param)
 }
 
 
+
 void InstrumentDumb::command(long cmd, long note, long vel) {
   if (cmd == 9) {		//'Key' pressed: attack begins
     bActive = true;
     adsr.start();
     index = 0;
 	A = vel / 127.;
+  this -> step = 440.0 *pow(2.0, (note - 69.0) / 12.0) * tbl.size() / SamplingRate; 
+  
   }
   else if (cmd == 8) {	//'Key' released: sustain ends, release begins
     adsr.stop();
@@ -59,10 +63,18 @@ const vector<float> & InstrumentDumb::synthesize() {
   else if (not bActive)
     return x;
 
+
   for (unsigned int i=0; i<x.size(); ++i) {
-    x[i] = A * tbl[index++];
-    if (index == tbl.size())
-      index = 0;
+    x[i] = A * tbl[(int) (phase + 0.5)];
+    phase += step;
+    while (phase >= tbl.size())
+      phase -= tbl.size();
+
+
+    //if (index == tbl.size())
+    
+  //  index = 0;
+
   }
   adsr(x); //apply envelope to x and update internal status of ADSR
 

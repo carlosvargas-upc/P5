@@ -1,5 +1,6 @@
 #include <iostream>
-#include "instrument_dumb.h"
+#include "instrument_dumb.h"  //Añadir instrumentos aqui con su .h
+#include "instrument_saw.h"   
 
 /*
   For each new instrument:
@@ -17,6 +18,9 @@ namespace upc {
     //    cout << name << ": " << parameters << endl;
     if (name == "InstrumentDumb") {
       pInst = (Instrument *) new InstrumentDumb(parameters);
+    }
+      if (name == "InstrumentSaw") {
+      pInst = (Instrument *) new InstrumentSaw(parameters);
     }
     return pInst;
   }
