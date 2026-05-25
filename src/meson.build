@@ -11,7 +11,8 @@ sources = [
 	'effects/effect.cpp',
 	'effects/tremolo.cpp',
 	'effects/vibrato.cpp',
-	'instruments/instrument_saw.cpp'
+	'instruments/instrument_saw.cpp',
+	'instruments/instrument_fm.cpp'
 
 ]
 

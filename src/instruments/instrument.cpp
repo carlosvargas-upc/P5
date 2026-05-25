@@ -1,6 +1,7 @@
 #include <iostream>
 #include "instrument_dumb.h"  //Añadir instrumentos aqui con su .h
 #include "instrument_saw.h"   
+#include "instrument_fm.h"
 
 /*
   For each new instrument:
@@ -21,6 +22,9 @@ namespace upc {
     }
       if (name == "InstrumentSaw") {
       pInst = (Instrument *) new InstrumentSaw(parameters);
+    }
+    else if (name == "InstrumentFM") { 
+      pInst = (Instrument *) new InstrumentFM(parameters);
     }
     return pInst;
   }
