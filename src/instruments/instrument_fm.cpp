@@ -15,8 +15,12 @@ InstrumentFM::InstrumentFM(const std::string &param)
   KeyValue kv(param);
   
   // Leemos los parámetros FM desde el .ins. Si no están, ponemos valores para un bajo
-  if (!kv.to_float("c_m_ratio", c_m_ratio))
-    c_m_ratio = 1.0f; // Relación 1:1 es perfecta para bajos profundos
+float N1, N2;
+
+if (kv.to_float("N1", N1) && kv.to_float("N2", N2))
+    c_m_ratio = N1 / N2;
+else if (!kv.to_float("c_m_ratio", c_m_ratio))
+    c_m_ratio = 1.0f;
     
   if (!kv.to_float("I", I))
     I = 3.5f; // Un índice de 3.5 da un golpe brillante en el ataque

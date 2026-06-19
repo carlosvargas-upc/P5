@@ -12,7 +12,8 @@ sources = [
 	'effects/tremolo.cpp',
 	'effects/vibrato.cpp',
 	'instruments/instrument_saw.cpp',
-	'instruments/instrument_fm.cpp'
+	'instruments/instrument_fm.cpp',
+	'instruments/instrument_seno.cpp'
 
 ]
 

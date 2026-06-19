@@ -1,0 +1,1 @@
+1 InstrumentFM ADSR_A=0.01; ADSR_D=0.0; ADSR_S=1.0; ADSR_R=0.1; c_m_ratio=100; I=0.3;

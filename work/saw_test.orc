@@ -1,0 +1,1 @@
+1	InstrumentSaw	ADSR_A=0.03; ADSR_D=0.00; ADSR_S=0.20; ADSR_R=0.30; N=40;

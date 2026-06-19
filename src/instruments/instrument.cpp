@@ -2,6 +2,7 @@
 #include "instrument_dumb.h"  //Añadir instrumentos aqui con su .h
 #include "instrument_saw.h"   
 #include "instrument_fm.h"
+#include "instrument_seno.h"
 
 /*
   For each new instrument:
@@ -14,18 +15,23 @@ using namespace std;
 
 namespace upc {
   Instrument * get_instrument(const string &name,
-			      const string &parameters) {
+                              const string &parameters) {
+
     Instrument * pInst = 0;
-    //    cout << name << ": " << parameters << endl;
+
     if (name == "InstrumentDumb") {
-      pInst = (Instrument *) new InstrumentDumb(parameters);
+      pInst = new InstrumentDumb(parameters);
     }
-      if (name == "InstrumentSaw") {
-      pInst = (Instrument *) new InstrumentSaw(parameters);
+    else if (name == "InstrumentSaw") {
+      pInst = new InstrumentSaw(parameters);
     }
-    else if (name == "InstrumentFM") { 
-      pInst = (Instrument *) new InstrumentFM(parameters);
+    else if (name == "InstrumentFM") {
+      pInst = new InstrumentFM(parameters);
     }
+    else if (name == "InstrumentSeno") {
+      pInst = new InstrumentSeno(parameters);
+    }
+
     return pInst;
   }
 }
