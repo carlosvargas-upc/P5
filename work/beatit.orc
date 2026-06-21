@@ -1,17 +1,5 @@
-0 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-1 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-2 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-3 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-4 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-5 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-6 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-7 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-8 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-9 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-10 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-11 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-12 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-13 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-14 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-15 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
-16 dumb A=0.02 D=0.1 S=0.4 R=0.1 N=1024
+0	InstrumentFM	ADSR_A=0.01; ADSR_D=0.3; ADSR_S=0.5; ADSR_R=0.1; N1=1.0; N2=1.0; I=5.0;
+1	InstrumentFM	ADSR_A=0.01; ADSR_D=1.0; ADSR_S=0.0; ADSR_R=0.2; N1=1.4; N2=1.0; I=10.0;
+2	InstrumentSeno	ADSR_A=0.05; ADSR_D=0.2; ADSR_S=0.7; ADSR_R=0.1; N=1024;
+3	InstrumentFM	ADSR_A=0.1; ADSR_D=0.4; ADSR_S=0.4; ADSR_R=0.2; N1=1.0; N2=2.0; I=2.0;
+12	InstrumentSeno	ADSR_A=0.02; ADSR_D=0.1; ADSR_S=0.4; ADSR_R=0.1; N=1024;

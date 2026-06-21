@@ -68,8 +68,7 @@ const vector<float> &InstrumentSeno::synthesize()
     for (unsigned int i=0;i<BSIZE;i++)
     {
         x[i] =
-            A *
-            tbl[(int)(phase+0.5)];
+            A * tbl[(int)(phase+0.5)];
 
         phase += step;
 
