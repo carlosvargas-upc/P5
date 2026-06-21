@@ -1,108 +1,127 @@
-PAV - P5: síntesis musical polifónica
-=====================================
 
-Obtenga su copia del repositorio de la práctica accediendo a [Práctica 5](https://github.com/albino-pav/P5) 
-y pulsando sobre el botón `Fork` situado en la esquina superior derecha. A continuación, siga las
-instrucciones de la [Práctica 2](https://github.com/albino-pav/P2) para crear una rama con el apellido de
-los integrantes del grupo de prácticas, dar de alta al resto de integrantes como colaboradores del proyecto
-y crear la copias locales del repositorio.
+# Memoria de Práctica 5: Síntesis Musical Polifónica
+**David Heredia, Carlos Vargas**
 
-Como entrega deberá realizar un *pull request* con el contenido de su copia del repositorio. Recuerde que
-los ficheros entregados deberán estar en condiciones de ser ejecutados con sólo ejecutar:
+## 2. Envolvente ADSR
+La envolvente ADSR (*Attack, Decay, Sustain, Release*) constituye el mecanismo de control dinámico primordial para modelar la evolución temporal de la amplitud de una señal. En nuestra implementación, el objeto `adsr` gestiona la transición entre estados basándose en la tasa de muestreo ($f_s = 44100$ Hz) y los parámetros definidos en el fichero de instrumentos:
 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~.sh
-  make release
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*   **Attack (A):** Tiempo en segundos para que la señal alcance su valor pico (1.0) desde el inicio del evento *NoteOn* .
+*   **Decay (D):** Tiempo para que la amplitud descienda desde el pico hasta el nivel de sostenido .
+*   **Sustain (S):** Nivel de amplitud constante que se preserva mientras la tecla permanece pulsada.
+*   **Release (R):** Tiempo de extinción del sonido una vez recibido el evento *NoteOff*.
 
-A modo de memoria de la práctica, complete, en este mismo documento y usando el formato *markdown*, los
-ejercicios indicados.
+Para confirmar que el ADSR funciona correctamente, utilizaremos una nota simple y suficientemente larga para apreciar una ADSR configurada con los siguientes parámetros para la funcion seno:  
+InstrumentSeno   ADSR_A=0.05; ADSR_D=0.2; ADSR_S=0.4; ADSR_R=0.1;
 
-Ejercicios.
------------
+![Gráfica ADSR Genérica](work/ADSR_seno.png)
+*Figura 1: Envolvente ADSR genérica (ADSR_A=0.05; ADSR_D=0.2; ADSR_S=0.4; ADSR_R=0.1)*
 
-### Envolvente ADSR.
+## 2.1. Instrumento ADSR Genérico: Sawtooth con Filtro Paso Bajo
+Para ilustrar el funcionamiento de una envolvente ADSR genérica, se ha implementado la clase InstrumentSaw. Este instrumento no se limita a generar una onda pura, sino que busca un sonido más complejo y "analógico" mediante las siguientes técnicas:
 
-Tomando como modelo un instrumento sencillo (puede usar el InstrumentDumb), genere cuatro instrumentos que
-permitan visualizar el funcionamiento de la curva ADSR.
+### Generación de la forma de onda (Sawtooth)
+A diferencia de una sinusoide, la onda de diente de sierra es conocida en síntesis por ser muy rica en armónicos. En el constructor del instrumento, se inicializa una tbl de tamaño N que representa un ciclo completo de una rampa lineal que asciende desde -1.0 hasta 1.0.
 
-* Un instrumento con una envolvente ADSR genérica, para el que se aprecie con claridad cada uno de sus
-  parámetros: ataque (A), caída (D), mantenimiento (S) y liberación (R).
-* Un instrumento *percusivo*, como una guitarra o un piano, en el que el sonido tenga un ataque rápido, no
-  haya mantenimiemto y el sonido se apague lentamente.
-  - Para un instrumento de este tipo, tenemos dos situaciones posibles:
-    * El intérprete mantiene la nota *pulsada* hasta su completa extinción.
-    * El intérprete da por finalizada la nota antes de su completa extinción, iniciándose una disminución
-	  abrupta del sonido hasta su finalización.
-  - Debera representar en esta memoria **ambos** posibles finales de la nota.
-* Un instrumento *plano*, como los de cuerdas frotadas (violines y semejantes) o algunos de viento. En
-  ellos, el ataque es relativamente rápido hasta alcanzar el nivel de mantenimiento (sin sobrecarga), y la
-  liberación también es bastante rápida.
+### Cálculo de frecuencia y transposición
+El método command() traduce la nota MIDI recibida a una frecuencia fundamental f 0​  utilizando la fórmula estándar Note=69+12⋅log 2 (f0​ /440). 
+Para que sea mas grave,la frecuencia se divide por 4.0, lo que transpone el sonido dos octavas hacia abajo, convirtiéndolo en un sintetizador de bajos profundo.
 
-Para los cuatro casos, deberá incluir una gráfica en la que se visualice claramente la curva ADSR. Deberá
-añadir la información necesaria para su correcta interpretación, aunque esa información puede reducirse a
-colocar etiquetas y títulos adecuados en la propia gráfica (se valorará positivamente esta alternativa).
+### Implementación del Filtro Paso Bajo
+Para suavizar el brillo agresivo de la onda de sierra, se ha incluido un filtro paso bajo de primer orden dentro del método synthesize(). La lógica utiliza una variable alpha fijada en 0.3 manualmente y la última muestra generada last_sample mediante la siguiente ecuación recursiva: 
 
-### Instrumentos Dumb y Seno.
+$$x[i] = \alpha \cdot (\text{muestra\_actual}) + (1 - \alpha) \cdot x[i-1]$$
 
-Implemente el instrumento `Seno` tomando como modelo el `InstrumentDumb`. La señal **deberá** formarse
-mediante búsqueda de los valores en una tabla.
+Este filtro suaviza las transiciones bruscas de la onda, eliminando componentes de alta frecuencia y otorgando un timbre más cálido al instrumento.
 
-- Incluya, a continuación, el código del fichero `seno.cpp` con los métodos de la clase Seno.
-- Explique qué método se ha seguido para asignar un valor a la señal a partir de los contenidos en la tabla,
-  e incluya una gráfica en la que se vean claramente (use pelotitas en lugar de líneas) los valores de la
-  tabla y los de la señal generada.
-- Si ha implementado la síntesis por tabla almacenada en fichero externo, incluya a continuación el código
-  del método `command()`.
 
-### Efectos sonoros.
+## 2.2. Instrumento Percusivo (Campana/Piano)
+El modelado de instrumentos percusivos o de cuerda pulsada requiere una configuración donde el nivel de mantenimiento es nulo (S=0). El ataque es casi instantáneo (mínimo tiempo de subida) para simular el impacto inicial, seguido de una fase de caída prolongada.
 
-- Incluya dos gráficas en las que se vean, claramente, el efecto del trémolo y el vibrato sobre una señal
-  sinusoidal. Deberá explicar detalladamente cómo se manifiestan los parámetros del efecto (frecuencia e
-  índice de modulación) en la señal generada (se valorará que la explicación esté contenida en las propias
-  gráficas, sin necesidad de mucha *literatura*).
-- Si ha generado algún efecto por su cuenta, explique en qué consiste, cómo lo ha implementado y qué
-  resultado ha producido. Incluya, en el directorio `work/ejemplos`, los ficheros necesarios para apreciar
-  el efecto, e indique, a continuación, la orden necesaria para generar los ficheros de audio usando el
-  programa `synth`.
+- Situación 1: Extinción completa. Si el intérprete mantiene la nota pulsada, la fase de Decay actúa como una extinción natural hasta llegar a cero.
+- Situación 2: NoteOff temprano. Si la nota se libera prematuramente, la envolvente entra inmediatamente en la fase de Release, provocando una atenuación abrupta.
 
-### Síntesis FM.
+Guardado como fm_campana.orc
 
-Construya un instrumento de síntesis FM, según las explicaciones contenidas en el enunciado y el artículo
-de [John M. Chowning](https://web.eecs.umich.edu/~fessler/course/100/misc/chowning-73-tso.pdf). El
-instrumento usará como parámetros **básicos** los números `N1` y `N2`, y el índice de modulación `I`, que
-deberá venir expresado en semitonos.
 
-- Use el instrumento para generar un vibrato de *parámetros razonables* e incluya una gráfica en la que se
-  vea, claramente, la correspondencia entre los valores `N1`, `N2` e `I` con la señal obtenida.
-- Use el instrumento para generar un sonido tipo clarinete y otro tipo campana. Tome los parámetros del
-  sonido (N1, N2 e I) y de la envolvente ADSR del citado artículo. Con estos sonidos, genere sendas escalas
-  diatónicas (fichero `doremi.sco`) y ponga el resultado en los ficheros `work/doremi/clarinete.wav` y
-  `work/doremi/campana.work`.
-  * También puede colgar en el directorio work/doremi otras escalas usando sonidos *interesantes*. Por
-    ejemplo, violines, pianos, percusiones, espadas láser de la
-	[Guerra de las Galaxias](https://www.starwars.com/), etc.
+## 2.3. Instrumento Plano (Clarinete)
+Este perfil simula instrumentos de excitación continuam, es decir que tienen aire constante. Se caracteriza por un ataque rápido que alcanza el nivel de manteniendo una amplitud constante hasta que el evento de liberación activa un apagado rápido pero suave para evitar transitorios inarmónicos.
 
-### Orquestación usando el programa synth.
+Guardado como fm_clarinete.orc
 
-Use el programa `synth` para generar canciones a partir de su partitura MIDI. Como mínimo, deberá incluir la
-*orquestación* de la canción *You've got a friend in me* (fichero `ToyStory_A_Friend_in_me.sco`) del genial
-[Randy Newman](https://open.spotify.com/artist/3HQyFCFFfJO3KKBlUfZsyW/about).
+---
 
-- En este triste arreglo, la pista 1 corresponde al instrumento solista (puede ser un piano, flauta,
-  violín, etc.), y la 2 al bajo (bajo eléctrico, contrabajo, tuba, etc.).
-- Coloque el resultado, junto con los ficheros necesarios para generarlo, en el directorio `work/music`.
-- Indique, a continuación, la orden necesaria para generar la señal (suponiendo que todos los archivos
-  necesarios están en el directorio indicado).
+## 3. Instrumentos: Seno
+### 3.1. Implementación del Instrumento Seno
+El instrumento seno genera la señal mediante la búsqueda de valores en una tabla precargada de un ciclo senoidal.
 
-También puede orquestar otros temas más complejos, como la banda sonora de *Hawaii5-0* o el villacinco de
-John Lennon *Happy Xmas (War Is Over)* (fichero `The_Christmas_Song_Lennon.sco`), o cualquier otra canción
-de su agrado o composición. Se valorará la riqueza instrumental, su modelado y el resultado final.
-- Coloque los ficheros generados, junto a sus ficheros `score`, `instruments` y `efffects`, en el directorio
-  `work/music`.
-- Indique, a continuación, la orden necesaria para generar cada una de las señales usando los distintos
-  ficheros.
+### Método de asignación de valores
+Para asignar un valor a la señal a partir de los contenidos en la tabla, se ha seguido un método de **redondeo al entero más cercano**. Dado que el incremento de fase necesario para alcanzar la frecuencia deseada no suele ser un número entero, el programa elige la muestra de la tabla más próxima a la fase actual.
 
-> NOTA:
->
-> No olvide escuchar el resultado generado y comprobar que no se producen ruidos extraños o distorsiones.
-> Sobre todo, tenga en cuenta la salud auditiva de quien será encargado de corregir su trabajo.
+![Gráfica de Síntesis por Tabla](work/Tabla.png)
+*Figura 5: Visualización de la síntesis. Los círculos azules representan los valores originales de la tabla (N=40) y los puntos rojos las muestras reales generadas. Se observa cómo el redondeo introduce una ligera distorsión audible que podría mejorarse mediante interpolación lineal.*
+
+---
+
+## 4. Efectos Sonoros
+### 4.1. Trémolo
+El trémolo es una modulación de amplitud que varía periódicamente el volumen de la señal siguiendo una forma sinusoidal. Se rige por la siguiente ecuación:
+
+$$x_r[n] = x_i[n] \cdot \frac{1 + A \cos(2\pi F_m n)}{1+A}$$
+
+Donde **A** es la profundidad de modulación y $F_m$ la frecuencia de modulación normalizada ($f_m/f_s$). El factor de división asegura que la ganancia esté normalizada para evitar el *clipping*.
+
+### 4.2. Vibrato
+Consiste en la modulación periódica de la fase o frecuencia de la señal, simulando el movimiento rítmico que realizan los instrumentistas de cuerda sobre el mástil. El índice de modulación **I** se calcula a partir de la extensión en semitonos ($\nu$) mediante la relación de Chowning:
+
+$$I = \frac{f_c}{f_m} \cdot \frac{2^{\nu/12}-1}{2^{\nu/12}+1}$$
+
+Nuestra implementación utiliza un búfer circular para gestionar los retardos variables necesarios para el cambio de tono, manteniendo la causalidad mediante un retardo de segurida.
+
+Ambos efectos pueden ser utilizados mediante la extension del comando **synth -e** y adjuntando uno o un conjunto de efectos en un archivo. Nosotros estubimos probando algunos en effects.orc.
+
+---
+
+## 5. Síntesis FM (Frequency Modulation)
+### 5.1. Configuración de Parámetros
+La síntesis FM permite generar timbres complejos mediante la interacción de una portadora ($f_c$) y una moduladora ($f_m$) . La relación armónica se define por el ratio $N_1/N_2 = f_c/f_m$, mientras que el índice de modulación **I** controla la riqueza tímbrica y el ancho de banda espectral.
+
+Despues de buscar informacion y intentar distintas cosas, conseguimos hacer algunos sonidos interesantes, que estaran presentes en las orquestras finales que estan en el apartado 6.
+
+---
+
+## 6. Orquestación y Resultados Finales
+### 6.1. You've got a friend in me (Toy Story)
+Para esta pieza de Randy Newman, se ha optado por una orquestación con tres capas :
+1.  **InstrumentSaw:** Melodía principal transpuesta dos octavas abajo para dar profundidad, aunque con un carácter algo melancólico debido a su timbre grave.
+2.  **InstrumentFM:** Configurado para imitar el ataque y percusión de un piano.
+3.  **InstrumentSeno:** Aporta detalles limpios y simples en el fondo.
+
+**Comando de generación:**
+```bash
+synth -g 0.3 work/music/toystory.orc samples/ToyStory_A_Friend_in_me.sco work/music/toystory.wav
+```
+### 6.2. Orquestra Adicional (Gangsta’s Paradise)
+Para este ejercicio de orquestación libre, se ha seleccionado el tema "Gangsta's Paradise". El proceso técnico seguido para su integración en el sintetizador es el siguiente:
+
+#### 1. Obtención y conversión de la partitura
+*   **Búsqueda del archivo MIDI:** Se obtuvo un archivo MIDI estándar de la canción desde una pagina web de google pública.
+*   **Conversión a formato .sco:** Se ha utilizado el script `midi2sco` incluido en la práctica. Este script procesa los mensajes MIDI de tipo *NoteOn*, *NoteOff* y los cambios de tempo para generar un archivo de texto con el tiempo expresado en *ticks*, permitiendo que el programa `synth` lea la partitura de forma incremental.
+
+#### 2. Diseño de la Orquesta (.orc)
+Se han configurado cuatro canales con timbres distintos para cubrir las diferentes texturas de la canción [1]:
+*   **Canal 1 - Melodía principal (InstrumentSaw):** Utiliza una onda de diente de sierra, rica en armónicos, ideal para sonidos con carácter.
+*   **Canal 2 - Bajo (InstrumentFM):** Configurado para dar cuerpo a la base rítmica.
+*   **Canal 3 - Base de acompañamiento (InstrumentDumb):** Instrumento sinusoidal básico que recorre una tabla de 40 muestras para reforzar la armonía con agudos.
+*   **Canal 4 - Sawtooth épico:** Otro diente de sierra con un ataque más lento para añadir mayor profundidad y "epicidad" al conjunto.
+
+#### 3. Resultados y ajuste de ganancia
+El resultado final tiene un carácter muy **"metálico"**, similar al sonido de un videojuego antiguo debido a la gran cantidad de armónicos de las ondas de sierra. Para evitar el *clipping* y la distorsión al sumar tantos instrumentos, se ha configurado una ganancia general de **0.1** .
+
+**Comando de generación:**
+```bash
+synth -g 0.1 work/instrumentos_gp.orc work/gp.sco gp.wav
+```
+
+## Conclusiones 
+
+Más allá de la música, la práctica ha sido un curso intensivo de teoría musical, síntesis e integración de sistemas. Hemos aprendido mucho sobre la organización del entorno de trabajo de un programador y además lo hemos hecho programando y personalizando nuestros propios instrumentos y efectos con diversas funciones. Después de ajustar mil veces cada instrumento, esperamos que no se nos haya colado alguna distorsión…
